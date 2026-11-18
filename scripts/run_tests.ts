@@ -359,22 +359,31 @@ async function runAllTests() {
   }
 
   // T14: EXPLAIN ANALYZE job search before/after GIN index -> Index Scan demonstrated
+  // The seed table is tiny (~15 rows), so the planner naturally prefers a Seq Scan.
+  // "Before" = default planner choice; "After" = enable_seqscan off, which shows the
+  // GIN index path the planner switches to once the table is large enough.
+  const t14Client = await getClient();
   try {
-    const explainPlan = await query(`
-      EXPLAIN ANALYZE 
-      SELECT job_id, title 
-      FROM jobs 
+    const explainSql = `
+      EXPLAIN ANALYZE
+      SELECT job_id, title
+      FROM jobs
       WHERE search_vector @@ plainto_tsquery('english', 'kubernetes');
-    `);
-    const planText = explainPlan.rows.map(r => r['QUERY PLAN']).join('\n');
-    const usesBitmapOrIndex = planText.includes('Bitmap Index Scan') || planText.includes('Index Scan') || planText.includes('idx_jobs_search') || planText.includes('Bitmap Heap Scan');
+    `;
+    const beforePlan = (await t14Client.query(explainSql)).rows.map(r => r['QUERY PLAN']).join('\n');
+    await t14Client.query('SET enable_seqscan = off');
+    const afterPlan = (await t14Client.query(explainSql)).rows.map(r => r['QUERY PLAN']).join('\n');
+    await t14Client.query('RESET enable_seqscan');
+    const usesGinIndex = afterPlan.includes('idx_jobs_search');
     results.push({
       id: 'T14',
       name: 'EXPLAIN ANALYZE job search before/after GIN index',
       expected: 'GIN index query plan utilizes Bitmap Index Scan / idx_jobs_search',
-      actual: `Query plan verified. Index utilization detected: ${usesBitmapOrIndex}`,
-      passed: true,
-      details: planText,
+      actual: usesGinIndex
+        ? 'Bitmap Index Scan on idx_jobs_search used for the full-text search'
+        : 'GIN index idx_jobs_search was NOT used',
+      passed: usesGinIndex,
+      details: `-- Before (default planner, small table):\n${beforePlan}\n\n-- After (enable_seqscan = off, index path):\n${afterPlan}`,
     });
   } catch (err: any) {
     results.push({
@@ -384,6 +393,8 @@ async function runAllTests() {
       actual: `Error: ${err.message}`,
       passed: false,
     });
+  } finally {
+    t14Client.release();
   }
 
   // T15: Delete a job -> job_skills, applications and embeddings removed (cascade)

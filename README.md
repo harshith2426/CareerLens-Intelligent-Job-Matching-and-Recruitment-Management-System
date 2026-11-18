@@ -8,7 +8,7 @@
 
 > **DBMS Experiential Learning - Level 3 Project**  
 > **Department of Computer Science and Engineering, PES University**  
-> **GitHub Repository:** [CareerLens-Intelligent-Job-Matching-and-Recruitment-Management-System](https://github.com/saathviksp/CareerLens-Intelligent-Job-Matching-and-Recruitment-Management-System)
+> **GitHub Repository:** [CareerLens-Intelligent-Job-Matching-and-Recruitment-Management-System](https://github.com/harshith2426/CareerLens-Intelligent-Job-Matching-and-Recruitment-Management-System)
 
 ---
 
@@ -147,7 +147,7 @@ careerlens/
 
 ### Step 1: Clone the Repository
 ```bash
-git clone https://github.com/saathviksp/CareerLens-Intelligent-Job-Matching-and-Recruitment-Management-System.git
+git clone https://github.com/harshith2426/CareerLens-Intelligent-Job-Matching-and-Recruitment-Management-System.git
 cd CareerLens-Intelligent-Job-Matching-and-Recruitment-Management-System
 ```
 
@@ -317,7 +317,7 @@ Follow this 8-step evaluation script matching Section 20 of the project definiti
 | **Q7** | Full-text job search with rank | `tsvector`, `plainto_tsquery`, GIN index, `ts_rank` |
 | **Q8** | Average days from applied to hired | Self-join on status history, date arithmetic, `EXTRACT(EPOCH)` |
 
-Full SQL definitions and query explanations: [docs/queries/queries_guide.md](file:///C:/Users/llath/OneDrive/Desktop/dbms%20mini%20project/docs/queries/queries_guide.md).
+Full SQL definitions and query explanations: [docs/queries/queries_guide.md](docs/queries/queries_guide.md).
 
 ---
 

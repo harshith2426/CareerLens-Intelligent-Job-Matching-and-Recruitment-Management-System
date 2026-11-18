@@ -26,10 +26,10 @@ export async function GET() {
          j.salary_max,
          j.deadline,
          compute_skill_score($1, j.job_id) AS skill_score,
-         ROUND((100.0 * (1.0 - (je.embedding <=> r.embedding)))::numeric, 2) AS semantic_score,
+         ROUND(GREATEST(0.0, LEAST(100.0, 100.0 * (1.0 - (je.embedding <=> r.embedding))))::numeric, 2) AS semantic_score,
          ROUND(
            (0.6 * compute_skill_score($1, j.job_id) + 
-            0.4 * 100.0 * (1.0 - (je.embedding <=> r.embedding)))::numeric, 
+            0.4 * GREATEST(0.0, LEAST(100.0, 100.0 * (1.0 - (je.embedding <=> r.embedding)))))::numeric, 
            2
          ) AS hybrid_score,
          COALESCE(
@@ -48,7 +48,8 @@ export async function GET() {
          ) AS already_applied
        FROM jobs j
        JOIN companies c ON c.company_id = j.company_id
-       JOIN job_embeddings je USING (job_id), r
+       JOIN job_embeddings je USING (job_id)
+       CROSS JOIN r
        LEFT JOIN job_skills js ON js.job_id = j.job_id
        LEFT JOIN skills s ON s.skill_id = js.skill_id
        WHERE j.status = 'open'

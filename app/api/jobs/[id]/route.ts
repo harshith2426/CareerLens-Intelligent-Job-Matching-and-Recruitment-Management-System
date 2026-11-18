@@ -73,8 +73,8 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
         `WITH r AS (SELECT embedding FROM resume_embeddings WHERE candidate_id = $1)
          SELECT 
            compute_skill_score($1, $2) AS skill_score,
-           ROUND((100.0 * (1.0 - (je.embedding <=> r.embedding)))::numeric, 2) AS semantic_score,
-           ROUND((0.6 * compute_skill_score($1, $2) + 0.4 * 100.0 * (1.0 - (je.embedding <=> r.embedding)))::numeric, 2) AS hybrid_score
+           ROUND(GREATEST(0.0, LEAST(100.0, 100.0 * (1.0 - (je.embedding <=> r.embedding))))::numeric, 2) AS semantic_score,
+           ROUND((0.6 * compute_skill_score($1, $2) + 0.4 * GREATEST(0.0, LEAST(100.0, 100.0 * (1.0 - (je.embedding <=> r.embedding)))))::numeric, 2) AS hybrid_score
          FROM jobs j
          JOIN job_embeddings je ON je.job_id = j.job_id, r
          WHERE j.job_id = $2`,
@@ -122,8 +122,8 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
          SET title = COALESCE($1, title),
              description = COALESCE($2, description),
              location = COALESCE($3, location),
-             salary_min = $4,
-             salary_max = $5,
+             salary_min = COALESCE($4, salary_min),
+             salary_max = COALESCE($5, salary_max),
              openings = COALESCE($6, openings),
              deadline = COALESCE($7, deadline),
              status = COALESCE($8, status)
