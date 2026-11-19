@@ -20,6 +20,22 @@ This guide details the core queries demonstrated in CareerLens, mapping them to 
 
 ---
 
+## Where Each Query Runs in the App
+
+| Query | Page | API route |
+|:---|:---|:---|
+| **Q1** Hybrid ranked matches | `/matches` (candidate) | `app/api/matches/route.ts` |
+| **Q2** Skill gap (correlated `NOT EXISTS`) | `/jobs/[id]` skill gap panel (candidate) | `app/api/jobs/[id]/skill-gap/route.ts` |
+| **Q3** Ranked applicants (view) | `/recruiter/jobs/[id]/applicants` | `app/api/jobs/[id]/applicants/route.ts` |
+| **Q4** Funnel (view) | `/recruiter/dashboard` funnel + per-job table | `app/api/dashboard/funnel/route.ts` |
+| **Q5** Companies with > 2 open jobs (`GROUP BY` / `HAVING`) | `/jobs` "Actively hiring" strip | `app/api/companies/route.ts?activelyHiring=true` |
+| **Q6** Above-average salary (nested subquery) | `/jobs` "Above-avg pay" badge + "Above platform average" filter | `app/api/jobs/route.ts` |
+| **Q7** Full-text search | `/jobs` search box | `app/api/jobs/route.ts` |
+| **Q8** Avg days applied → hired (self-join) | `/recruiter/dashboard` "Avg Days to Hire" card | `app/api/dashboard/funnel/route.ts` |
+| **Q9** Status journey (`WITH RECURSIVE`) | `/applications` "Journey" line on each application (candidate) | `app/api/applications/route.ts` |
+
+---
+
 ## Detailed Query Implementations
 
 ### Q1: Ranked Jobs for Candidate (Hybrid Match)

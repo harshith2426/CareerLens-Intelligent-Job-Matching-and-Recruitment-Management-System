@@ -22,6 +22,7 @@ interface Job {
   openings: number;
   deadline: string;
   rank: number;
+  above_avg_pay: boolean;
   required_skills: {
     skill_id: number;
     name: string;
@@ -42,13 +43,20 @@ function JobsListContent() {
   const [location, setLocation] = useState('');
   const [salaryMin, setSalaryMin] = useState('');
   const [skillId, setSkillId] = useState('');
+  const [hiringCompanies, setHiringCompanies] = useState<{ company_id: number; name: string; open_jobs: number }[]>([]);
 
-  // Fetch skills for filter dropdown
+  // Fetch skills for filter dropdown + actively hiring companies (Q5)
   useEffect(() => {
     fetch('/api/skills')
       .then((res) => res.json())
       .then((data) => {
         if (data.skills) setSkillsCatalog(data.skills);
+      })
+      .catch(() => {});
+    fetch('/api/companies?activelyHiring=true')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.companies) setHiringCompanies(data.companies);
       })
       .catch(() => {});
   }, []);
@@ -158,6 +166,7 @@ function JobsListContent() {
               <option value="140000">$140k+</option>
               <option value="160000">$160k+</option>
               <option value="180000">$180k+</option>
+              <option value="above_avg">Above platform average</option>
             </select>
           </div>
 
@@ -187,6 +196,24 @@ function JobsListContent() {
           </button>
         )}
       </div>
+
+      {/* Actively Hiring Companies (Q5: GROUP BY + HAVING COUNT > 2) */}
+      {hiringCompanies.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center space-x-1.5 text-slate-700 text-xs font-semibold uppercase tracking-wider mr-1">
+            <Building className="w-4 h-4 text-indigo-600" />
+            <span>Actively hiring (more than 2 open jobs):</span>
+          </div>
+          {hiringCompanies.map((c) => (
+            <span
+              key={c.company_id}
+              className="text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 px-3 py-1 rounded-full"
+            >
+              {c.name} · {c.open_jobs} open jobs
+            </span>
+          ))}
+        </div>
+      )}
 
       {/* Results Section */}
       {loading ? (
@@ -240,6 +267,12 @@ function JobsListContent() {
                       <DollarSign className="w-3.5 h-3.5" />
                       <span>${(job.salary_min / 1000).toFixed(0)}k - ${(job.salary_max / 1000).toFixed(0)}k</span>
                     </div>
+                  )}
+
+                  {job.above_avg_pay && (
+                    <span className="text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded">
+                      Above-avg pay
+                    </span>
                   )}
 
                   <div className="flex items-center space-x-1 text-slate-400">

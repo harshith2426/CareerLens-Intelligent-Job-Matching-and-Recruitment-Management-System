@@ -78,7 +78,7 @@ export default function RecruiterDashboardPage() {
       ) : (
         <>
           {/* KPI Summary Cards */}
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
             <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Active Postings</span>
               <p className="text-3xl font-extrabold text-slate-900 mt-1">{summary?.total_jobs || 0}</p>
@@ -106,6 +106,16 @@ export default function RecruiterDashboardPage() {
                 </span>
               </div>
               <p className="text-xs text-slate-500 mt-1">Overall pipeline conversion</p>
+            </div>
+
+            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Avg Days to Hire</span>
+              <p className="text-3xl font-extrabold text-slate-900 mt-1">
+                {summary?.avg_days_to_hire != null ? summary.avg_days_to_hire : '—'}
+              </p>
+              <p className="text-xs text-slate-500 mt-1">
+                Applied → hired, over {summary?.hires_measured || 0} hire(s)
+              </p>
             </div>
           </div>
 

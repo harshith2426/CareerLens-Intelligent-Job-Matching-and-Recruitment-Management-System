@@ -41,7 +41,35 @@ export async function GET() {
       [session.candidateId]
     );
 
-    return NextResponse.json({ applications: appsRes.rows });
+    // Q9: recursive query - rebuild each application's full status journey from the audit trail
+    const journeyRes = await query(
+      `WITH RECURSIVE steps AS (
+         SELECT h.application_id, h.new_status, h.changed_at,
+                ROW_NUMBER() OVER (PARTITION BY h.application_id ORDER BY h.changed_at, h.history_id) AS step_no
+         FROM application_status_history h
+         JOIN applications a ON a.application_id = h.application_id
+         WHERE a.candidate_id = $1
+       ),
+       journey AS (
+         SELECT application_id, step_no, new_status::text AS path, changed_at AS started_at, changed_at
+         FROM steps
+         WHERE step_no = 1
+         UNION ALL
+         SELECT s.application_id, s.step_no, j.path || ' → ' || s.new_status::text, j.started_at, s.changed_at
+         FROM journey j
+         JOIN steps s ON s.application_id = j.application_id AND s.step_no = j.step_no + 1
+       )
+       SELECT DISTINCT ON (application_id)
+         application_id, path AS status_journey, step_no AS stages,
+         ROUND(EXTRACT(EPOCH FROM (changed_at - started_at)) / 86400.0, 1) AS days_in_pipeline
+       FROM journey
+       ORDER BY application_id, step_no DESC`,
+      [session.candidateId]
+    );
+    const journeyById = new Map(journeyRes.rows.map((r: any) => [r.application_id, r]));
+    const applications = appsRes.rows.map((a: any) => ({ ...a, journey: journeyById.get(a.application_id) || null }));
+
+    return NextResponse.json({ applications });
   } catch (err: any) {
     console.error('Fetch applications error:', err);
     return NextResponse.json({ error: err.message }, { status: 500 });

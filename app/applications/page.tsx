@@ -25,6 +25,7 @@ interface Application {
   match_score: number;
   applied_at: string;
   timeline: HistoryItem[];
+  journey: { status_journey: string; stages: number; days_in_pipeline: number } | null;
 }
 
 export default function ApplicationsPage() {
@@ -167,6 +168,17 @@ export default function ApplicationsPage() {
                   )}
                 </div>
               </div>
+
+              {/* Full journey built by the recursive query (Q9) */}
+              {app.journey && (
+                <div className="bg-indigo-50 border border-indigo-100 rounded-2xl px-4 py-3 text-xs">
+                  <span className="font-bold uppercase tracking-wider text-indigo-500">Journey: </span>
+                  <span className="font-semibold text-slate-900 capitalize">{app.journey.status_journey}</span>
+                  <span className="text-slate-500">
+                    {' '}· {app.journey.stages} stage{Number(app.journey.stages) > 1 ? 's' : ''} · {app.journey.days_in_pipeline} days in pipeline
+                  </span>
+                </div>
+              )}
 
               {/* Status Audit Timeline Stepper */}
               <div>

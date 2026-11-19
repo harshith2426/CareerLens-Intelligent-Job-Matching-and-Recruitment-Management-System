@@ -31,7 +31,10 @@ export async function GET(req: Request) {
       paramIdx++;
     }
 
-    if (salaryMin) {
+    if (salaryMin === 'above_avg') {
+      // Q6: nested (scalar) subquery - jobs paying above the platform average
+      conditions.push(`j.salary_max > (SELECT AVG(salary_max) FROM jobs)`);
+    } else if (salaryMin) {
       conditions.push(`j.salary_max >= $${paramIdx++}`);
       params.push(parseInt(salaryMin, 10));
     }
@@ -70,6 +73,7 @@ export async function GET(req: Request) {
         j.status,
         j.created_at,
         ${ftsSelect},
+        (j.salary_max > (SELECT AVG(salary_max) FROM jobs)) AS above_avg_pay,
         COALESCE(
           json_agg(
             json_build_object(

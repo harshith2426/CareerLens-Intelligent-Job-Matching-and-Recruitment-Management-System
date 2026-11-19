@@ -51,8 +51,23 @@ export async function GET() {
       [session.recruiterId]
     );
 
+    // Q8: average days from 'applied' to 'hired' (self-join on the status history), for this recruiter's jobs
+    const hireTimeRes = await query(
+      `SELECT
+        ROUND(AVG(EXTRACT(EPOCH FROM (h_hired.changed_at - h_app.changed_at)) / 86400.0), 1) AS avg_days_to_hire,
+        COUNT(DISTINCT a.application_id) AS hires_measured
+       FROM applications a
+       JOIN jobs j ON j.job_id = a.job_id
+       JOIN application_status_history h_app
+         ON h_app.application_id = a.application_id AND h_app.new_status = 'applied' AND h_app.old_status IS NULL
+       JOIN application_status_history h_hired
+         ON h_hired.application_id = a.application_id AND h_hired.new_status = 'hired'
+       WHERE j.recruiter_id = $1 AND a.status = 'hired'`,
+      [session.recruiterId]
+    );
+
     return NextResponse.json({
-      summary: summaryRes.rows[0],
+      summary: { ...summaryRes.rows[0], ...hireTimeRes.rows[0] },
       jobs: jobsFunnelRes.rows,
     });
   } catch (err: any) {
