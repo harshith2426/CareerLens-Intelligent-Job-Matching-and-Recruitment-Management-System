@@ -3,6 +3,18 @@
 ## 1. Overview
 CareerLens uses a relational PostgreSQL 16 schema augmented with `pgvector` for high-dimensional vector embeddings. The schema is normalized into Third Normal Form (3NF), resolving many-to-many relationships through junction tables and guaranteeing data integrity at the database engine level.
 
+## Diagrams (PNG)
+
+**ER diagram (Chen notation)**
+
+![CareerLens ER diagram](er_diagram.png)
+
+**Relational schema** (PK = solid underline, FK = dotted underline, arrows go FK → referenced PK)
+
+![CareerLens relational schema](relational_schema.png)
+
+*Regenerate with `python scripts/diagrams/er_chen.py docs/er-diagram/er_diagram.png` and `python scripts/diagrams/relational_schema.py docs/er-diagram/relational_schema.png` (needs Pillow).*
+
 ## 2. Mermaid Entity-Relationship Diagram
 
 ```mermaid

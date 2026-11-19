@@ -2,7 +2,7 @@
 
 **Project:** CareerLens - Job, Skill and Recruitment Management System  
 **DBMS Experiential Learning - Level 3**  
-**Execution Timestamp:** 2026-11-18T15:10:42.732Z  
+**Execution Timestamp:** 2026-11-19T15:07:30.149Z  
 **Overall Result:** **16 / 16 PASSED (100% SUCCESS RATE)**
 
 ---
@@ -16,7 +16,7 @@
 | **T3** | Candidate opens a recruiter URL | 403 / redirect: candidate role forbidden from recruiter route | Candidate role is 'candidate', authorization check blocked access (isForbidden = true) | ✅ **PASS** |
 | **T4** | Recruiter edits another recruiter's job | 403, no change (ownership check fails) | Recruiter 2 trying to edit job of Recruiter 1: canEdit = false | ✅ **PASS** |
 | **T5** | Create job with salary_min > salary_max | Rejected by CHECK constraint | Rejected as expected: new row for relation "jobs" violates check constraint "chk_salary_range" | ✅ **PASS** |
-| **T6** | Create job with a past deadline | Rejected by trigger | Trigger raised exception as expected: Job deadline (2026-11-13) cannot be in the past (Current date: 2026-11-18) | ✅ **PASS** |
+| **T6** | Create job with a past deadline | Rejected by trigger | Trigger raised exception as expected: Job deadline (2026-11-14) cannot be in the past (Current date: 2026-11-19) | ✅ **PASS** |
 | **T7** | Set proficiency = 7 | Rejected by CHECK constraint | Rejected as expected: new row for relation "candidate_skills" violates check constraint "candidate_skills_proficiency_check" | ✅ **PASS** |
 | **T8** | Apply twice to the same job | Second attempt rejected by UNIQUE constraint | Rejected by UNIQUE constraint: duplicate key value violates unique constraint "uq_candidate_job" | ✅ **PASS** |
 | **T9** | Apply to a closed job or after deadline | Transaction rolls back, nothing inserted | Transaction aborted as expected: Job 15 is not open for applications (current status: closed) | ✅ **PASS** |
@@ -41,20 +41,20 @@ WHERE search_vector @@ plainto_tsquery('english', 'kubernetes');
 
 ```text
 -- Before (default planner, small table):
-Seq Scan on jobs  (cost=0.00..11.50 rows=1 width=322) (actual time=0.002..0.004 rows=2 loops=1)
+Seq Scan on jobs  (cost=0.00..11.50 rows=1 width=322) (actual time=0.003..0.006 rows=2 loops=1)
   Filter: (search_vector @@ '''kubernet'''::tsquery)
   Rows Removed by Filter: 13
-Planning Time: 0.020 ms
-Execution Time: 0.007 ms
+Planning Time: 0.027 ms
+Execution Time: 0.009 ms
 
 -- After (enable_seqscan = off, index path):
-Bitmap Heap Scan on jobs  (cost=12.81..16.82 rows=1 width=322) (actual time=0.007..0.007 rows=2 loops=1)
+Bitmap Heap Scan on jobs  (cost=12.81..16.82 rows=1 width=322) (actual time=0.172..0.173 rows=2 loops=1)
   Recheck Cond: (search_vector @@ '''kubernet'''::tsquery)
   Heap Blocks: exact=1
-  ->  Bitmap Index Scan on idx_jobs_search  (cost=0.00..12.81 rows=1 width=0) (actual time=0.006..0.006 rows=2 loops=1)
+  ->  Bitmap Index Scan on idx_jobs_search  (cost=0.00..12.81 rows=1 width=0) (actual time=0.170..0.170 rows=2 loops=1)
         Index Cond: (search_vector @@ '''kubernet'''::tsquery)
-Planning Time: 0.015 ms
-Execution Time: 0.013 ms
+Planning Time: 0.038 ms
+Execution Time: 0.184 ms
 ```
 
 ---

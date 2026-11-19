@@ -88,6 +88,7 @@ careerlens/
 │   ├── 03_triggers.sql                # trg_status_history, trg_job_deadline, trg_candidates_updated_at
 │   ├── 04_views.sql                   # v_job_funnel, v_ranked_applicants
 │   ├── 05_indexes.sql                 # GIN full-text index, HNSW vector indexes, B-Tree indexes
+│   ├── 06_roles.sql                   # Database roles candidate_role / recruiter_role with GRANTs (RBAC in DB)
 │   ├── reset.ts                       # Complete database schema reset script (npm run db:reset)
 │   └── seed/
 │       ├── 01_skills.sql              # 25 seeded skills across 5 categories
@@ -304,7 +305,7 @@ Follow this 8-step evaluation script matching Section 20 of the project definiti
 
 ---
 
-## 8. Summary of Important Queries (Q1 – Q8)
+## 8. Summary of Important Queries (Q1 – Q9)
 
 | Query | Purpose | Key DBMS Concepts |
 |:---|:---|:---|
@@ -316,6 +317,7 @@ Follow this 8-step evaluation script matching Section 20 of the project definiti
 | **Q6** | Jobs paying above average salary | Scalar subquery, aggregate function (`AVG`) |
 | **Q7** | Full-text job search with rank | `tsvector`, `plainto_tsquery`, GIN index, `ts_rank` |
 | **Q8** | Average days from applied to hired | Self-join on status history, date arithmetic, `EXTRACT(EPOCH)` |
+| **Q9** | Full status journey of each application | Recursive CTE (`WITH RECURSIVE`), `ROW_NUMBER()`, `DISTINCT ON` |
 
 Full SQL definitions and query explanations: [docs/queries/queries_guide.md](docs/queries/queries_guide.md).
 
@@ -330,10 +332,11 @@ Full SQL definitions and query explanations: [docs/queries/queries_guide.md](doc
 | 3 | **SQL + Vector Database** | Option 2: Unified relational PostgreSQL 16 + `pgvector` extension |
 | 4 | **3NF Relational Schema** | 12 tables in 3NF, 3 ENUMs, 14 foreign keys with cascade/restrict rules |
 | 5 | **DDL Statements** | `CREATE TYPE`, `CREATE EXTENSION`, `CREATE TABLE`, `ALTER TABLE` (tsvector), `CREATE INDEX`, `CREATE VIEW`, `CREATE FUNCTION`, `CREATE TRIGGER` |
-| 6 | **DML & Advanced Queries** | Queries Q1 through Q8 (CTE, vector distance, window functions, `NOT EXISTS`, `HAVING`, scalar subqueries, date arithmetic) |
+| 6 | **DML & Advanced Queries** | Queries Q1 through Q9 (CTE, recursive CTE, vector distance, window functions, `NOT EXISTS`, `HAVING`, scalar subqueries, date arithmetic) |
 | 7 | **Advanced SQL Features** | Transactions (`apply_to_job`), Triggers (`trg_status_history`, `trg_job_deadline`), Stored Functions (`compute_skill_score`), Views (`v_job_funnel`, `v_ranked_applicants`), Indexes (Composite, GIN, HNSW), FTS (`tsvector`) |
 | 8 | **Vector Semantic Search** | 384-d `all-MiniLM-L6-v2` dense vectors in `vector(384)` with HNSW index using `vector_cosine_ops` |
 | 9 | **Web Interface (Next.js)** | Responsive App Router interface with search, filters, job details, skill gap, matches, applications timeline, recruiter job posting, ranked applicants, and funnel dashboard |
+| 10a | **Role-Based Access Control in DB** | PostgreSQL roles `candidate_role` and `recruiter_role` with table- and column-level `GRANT`s (`db/06_roles.sql`); e.g. `SET ROLE candidate_role; DELETE FROM jobs ...` → *permission denied* |
 | 10 | **Security & Credentials** | All credentials loaded from `.env` (no hard-coded secrets), parameterized SQL queries (no SQL injection), bcrypt password hashing, httpOnly JWT cookies |
 | 11 | **Automated Tests** | 16 test cases (T1 - T16) verifying integrity, constraints, triggers, queries, and permissions with 100% pass rate |
 | 12 | **Git Commits & Documentation** | Individual commit log per member on GitHub with full documentation in `docs/` |

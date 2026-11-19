@@ -54,6 +54,40 @@ async function verifyQueries() {
   `);
   console.table(q8.rows);
 
+  console.log('--- Q9: Status Journey of Each Application (WITH RECURSIVE) ---');
+  const q9 = await query(`
+WITH RECURSIVE steps AS (
+    -- number each status change of an application in time order
+    SELECT application_id, new_status, changed_at,
+           ROW_NUMBER() OVER (PARTITION BY application_id ORDER BY changed_at, history_id) AS step_no
+    FROM application_status_history
+),
+journey AS (
+    -- anchor member: the first status of every application
+    SELECT application_id, step_no, new_status::text AS path, changed_at AS started_at, changed_at
+    FROM steps
+    WHERE step_no = 1
+    UNION ALL
+    -- recursive member: append the next status to the path
+    SELECT s.application_id, s.step_no, j.path || ' -> ' || s.new_status::text, j.started_at, s.changed_at
+    FROM journey j
+    JOIN steps s ON s.application_id = j.application_id AND s.step_no = j.step_no + 1
+)
+SELECT DISTINCT ON (j.application_id)
+    j.application_id,
+    c.full_name AS candidate,
+    jb.title AS job,
+    j.path AS status_journey,
+    j.step_no AS stages,
+    ROUND(EXTRACT(EPOCH FROM (j.changed_at - j.started_at)) / 86400.0, 1) AS days_in_pipeline
+FROM journey j
+JOIN applications a ON a.application_id = j.application_id
+JOIN candidates c ON c.candidate_id = a.candidate_id
+JOIN jobs jb ON jb.job_id = a.job_id
+ORDER BY j.application_id, j.step_no DESC;
+  `);
+  console.table(q9.rows.slice(0, 10));
+
   process.exit(0);
 }
 

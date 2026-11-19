@@ -16,6 +16,7 @@ This guide details the core queries demonstrated in CareerLens, mapping them to 
 | **Q6** | Jobs paying above the platform average salary | Scalar Subquery, `AVG()` aggregate | Returns top-paying jobs and salary premium above platform average |
 | **Q7** | Full-text job search with rank | `tsvector`, `plainto_tsquery`, `ts_rank` ordering, GIN index | Natural language keyword search ranked by linguistic relevance |
 | **Q8** | Average days from application to hire | Self-join on status history, timestamp date arithmetic, `EXTRACT(EPOCH)` | Calculates turnaround cycle time across hiring pipeline |
+| **Q9** | Full status journey of every application | Recursive CTE (`WITH RECURSIVE`, anchor + recursive member), `ROW_NUMBER()`, `DISTINCT ON` | Rebuilds each applicant's pipeline path, e.g. applied -> screening -> hired |
 
 ---
 
@@ -189,3 +190,37 @@ JOIN application_status_history h_hired
  AND h_hired.new_status = 'hired';
 ```
 * **Explanation:** Performs an analytical self-join on the trigger-maintained `application_status_history` table to calculate the exact duration elapsed from the initial `'applied'` audit timestamp to the `'hired'` status transition.
+
+### Q9: Full Status Journey of Every Application (Recursive)
+```sql
+WITH RECURSIVE steps AS (
+    -- number each status change of an application in time order
+    SELECT application_id, new_status, changed_at,
+           ROW_NUMBER() OVER (PARTITION BY application_id ORDER BY changed_at, history_id) AS step_no
+    FROM application_status_history
+),
+journey AS (
+    -- anchor member: the first status of every application
+    SELECT application_id, step_no, new_status::text AS path, changed_at AS started_at, changed_at
+    FROM steps
+    WHERE step_no = 1
+    UNION ALL
+    -- recursive member: append the next status to the path
+    SELECT s.application_id, s.step_no, j.path || ' -> ' || s.new_status::text, j.started_at, s.changed_at
+    FROM journey j
+    JOIN steps s ON s.application_id = j.application_id AND s.step_no = j.step_no + 1
+)
+SELECT DISTINCT ON (j.application_id)
+    j.application_id,
+    c.full_name AS candidate,
+    jb.title AS job,
+    j.path AS status_journey,
+    j.step_no AS stages,
+    ROUND(EXTRACT(EPOCH FROM (j.changed_at - j.started_at)) / 86400.0, 1) AS days_in_pipeline
+FROM journey j
+JOIN applications a ON a.application_id = j.application_id
+JOIN candidates c ON c.candidate_id = a.candidate_id
+JOIN jobs jb ON jb.job_id = a.job_id
+ORDER BY j.application_id, j.step_no DESC;
+```
+* **Explanation:** The anchor member selects the first status of every application; the recursive member repeatedly joins the next history row (`step_no + 1`) and appends it to the path until no further step exists. The final `DISTINCT ON` keeps the longest path per application, giving its complete journey and the number of days it has spent in the pipeline.

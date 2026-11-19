@@ -38,6 +38,11 @@ async function resetDatabase() {
   const indexesSql = fs.readFileSync(path.join(dbDir, '05_indexes.sql'), 'utf-8');
   await query(indexesSql);
 
+  // Step 7: Run 06_roles.sql (database roles + GRANTs for candidate / recruiter)
+  console.log('🔐 Executing 06_roles.sql...');
+  const rolesSql = fs.readFileSync(path.join(dbDir, '06_roles.sql'), 'utf-8');
+  await query(rolesSql);
+
   // Verify created tables
   const tablesRes = await query(`
     SELECT table_name 
