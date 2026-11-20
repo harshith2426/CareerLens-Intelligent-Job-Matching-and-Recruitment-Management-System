@@ -8,5 +8,9 @@ export async function GET() {
   }
 
   const updatedSession = await fetchFullUserSession(session.userId);
-  return NextResponse.json({ user: updatedSession });
+  if (!updatedSession) {
+    return NextResponse.json({ user: null }, { status: 401 });
+  }
+  // keep the "admin is acting as this user" marker so the UI can offer "Back to Admin"
+  return NextResponse.json({ user: { ...updatedSession, adminUserId: session.adminUserId } });
 }

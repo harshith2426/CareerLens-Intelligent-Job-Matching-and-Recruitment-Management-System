@@ -12,11 +12,12 @@ const COOKIE_NAME = 'careerlens_token';
 export interface UserSession {
   userId: number;
   email: string;
-  role: 'candidate' | 'recruiter';
+  role: 'candidate' | 'recruiter' | 'admin';
   candidateId?: number;
   recruiterId?: number;
   companyId?: number;
   fullName: string;
+  adminUserId?: number; // set when an admin is "acting as" this candidate/recruiter
 }
 
 export async function hashPassword(password: string): Promise<string> {
@@ -76,6 +77,10 @@ export async function fetchFullUserSession(userId: number): Promise<UserSession 
     }
   }
 
+  if (user.role === 'admin') {
+    fullName = 'Administrator';
+  }
+
   return {
     userId: user.user_id,
     email: user.email,
@@ -85,6 +90,14 @@ export async function fetchFullUserSession(userId: number): Promise<UserSession 
     companyId,
     fullName: fullName || user.email.split('@')[0],
   };
+}
+
+// Admin-only guard for /api/admin/* route handlers.
+// An admin who is currently "acting as" another user is NOT treated as admin until they switch back.
+export async function requireAdmin(): Promise<UserSession | null> {
+  const session = await getSessionFromCookies();
+  if (!session || session.role !== 'admin') return null;
+  return session;
 }
 
 export { COOKIE_NAME };

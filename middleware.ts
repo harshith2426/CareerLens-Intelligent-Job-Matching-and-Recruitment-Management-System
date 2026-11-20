@@ -6,7 +6,7 @@ const COOKIE_NAME = 'careerlens_token';
 interface TokenPayload {
   userId: number;
   email: string;
-  role: 'candidate' | 'recruiter';
+  role: 'candidate' | 'recruiter' | 'admin';
   candidateId?: number;
   recruiterId?: number;
   fullName: string;
@@ -42,10 +42,24 @@ export function middleware(req: NextRequest) {
 
   // 1. Redirect logged-in users away from auth pages
   if (session && (pathname === '/login' || pathname === '/register')) {
-    if (session.role === 'recruiter') {
+    if (session.role === 'admin') {
+      return NextResponse.redirect(new URL('/admin', req.url));
+    } else if (session.role === 'recruiter') {
       return NextResponse.redirect(new URL('/recruiter/dashboard', req.url));
     } else {
       return NextResponse.redirect(new URL('/matches', req.url));
+    }
+  }
+
+  // Protect Admin Console
+  if (pathname.startsWith('/admin')) {
+    if (!session) {
+      const url = new URL('/login', req.url);
+      url.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(url);
+    }
+    if (session.role !== 'admin') {
+      return NextResponse.redirect(new URL('/jobs?error=forbidden', req.url));
     }
   }
 
@@ -83,6 +97,8 @@ export const config = {
     '/login',
     '/register',
     '/recruiter/:path*',
+    '/admin/:path*',
+    '/admin',
     '/matches',
     '/profile',
     '/applications',

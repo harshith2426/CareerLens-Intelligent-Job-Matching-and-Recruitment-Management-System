@@ -3,8 +3,8 @@
 -- Job, Skill and Recruitment Management System
 -- DBMS Experiential Learning - Level 3
 -- ============================================================================
--- The two application roles (users.role = 'candidate' | 'recruiter') are mirrored
--- by PostgreSQL roles, so the database itself decides what each role may do.
+-- The three application roles (users.role = 'candidate' | 'recruiter' | 'admin') are
+-- mirrored by PostgreSQL roles, so the database itself decides what each role may do.
 --
 -- Demo (in psql):
 --   SET ROLE candidate_role;
@@ -21,12 +21,15 @@ DO $$ BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'recruiter_role') THEN
         CREATE ROLE recruiter_role NOLOGIN;
     END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'admin_role') THEN
+        CREATE ROLE admin_role NOLOGIN;
+    END IF;
 END $$;
 
 -- 2. Start with no privileges, then grant only what each role needs
-REVOKE ALL ON ALL TABLES IN SCHEMA public FROM candidate_role, recruiter_role;
-GRANT USAGE ON SCHEMA public TO candidate_role, recruiter_role;
-GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO candidate_role, recruiter_role;
+REVOKE ALL ON ALL TABLES IN SCHEMA public FROM candidate_role, recruiter_role, admin_role;
+GRANT USAGE ON SCHEMA public TO candidate_role, recruiter_role, admin_role;
+GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO candidate_role, recruiter_role, admin_role;
 
 -- 3. Candidate: browse jobs, manage own profile/skills, apply and track applications
 GRANT SELECT ON companies, skills, jobs, job_skills, job_embeddings TO candidate_role;
@@ -45,3 +48,6 @@ GRANT UPDATE (status) ON applications TO recruiter_role;      -- column-level: o
 GRANT SELECT, INSERT ON application_status_history TO recruiter_role;
 GRANT SELECT ON v_job_funnel, v_ranked_applicants TO recruiter_role;
 -- (no access to candidate_skills or resume_embeddings)
+
+-- 5. Admin: full CRUD on every table and view (can do everything a candidate or recruiter can, and more)
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO admin_role;

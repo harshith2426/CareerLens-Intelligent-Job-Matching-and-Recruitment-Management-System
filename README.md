@@ -20,7 +20,7 @@
 | **Section** | Section 19 |
 | **Project Title** | CareerLens - Job, Skill and Recruitment Management System |
 | **Architecture Option** | **Option 2: SQL + Vector database** (PostgreSQL 16 with `pgvector`) |
-| **Supported Roles** | Candidate, Recruiter |
+| **Supported Roles** | Candidate, Recruiter, Admin |
 
 ### Team Members & Module Division
 
@@ -264,6 +264,7 @@ All accounts share the default seed password: `password123`.
 | **Recruiter** | `recruiter2@cloudscale.io` | Marcus Vance (Principal Recruiter, CloudScale Systems). Manages DevOps roles. |
 | **Recruiter** | `recruiter3@fintechmatrix.com` | Elena Rostova (Talent Lead, FinTech Matrix). Manages Database & FinTech roles. |
 | **Recruiter** | `recruiter4@pixelcraft.dev` | David Kim (Senior Partner, PixelCraft Studio). Manages Frontend roles. |
+| **Admin** | `admin@careerlens.com` | Platform administrator. Admin Console at `/admin`: full CRUD on every table + "act as" any candidate or recruiter. |
 
 *(The login page at `/login` includes 1-click login buttons for instant evaluation without typing).*
 
@@ -336,7 +337,8 @@ Full SQL definitions and query explanations: [docs/queries/queries_guide.md](doc
 | 7 | **Advanced SQL Features** | Transactions (`apply_to_job`), Triggers (`trg_status_history`, `trg_job_deadline`), Stored Functions (`compute_skill_score`), Views (`v_job_funnel`, `v_ranked_applicants`), Indexes (Composite, GIN, HNSW), FTS (`tsvector`) |
 | 8 | **Vector Semantic Search** | 384-d `all-MiniLM-L6-v2` dense vectors in `vector(384)` with HNSW index using `vector_cosine_ops` |
 | 9 | **Web Interface (Next.js)** | Responsive App Router interface with search, filters, job details, skill gap, matches, applications timeline, recruiter job posting, ranked applicants, and funnel dashboard |
-| 10a | **Role-Based Access Control in DB** | PostgreSQL roles `candidate_role` and `recruiter_role` with table- and column-level `GRANT`s (`db/06_roles.sql`); e.g. `SET ROLE candidate_role; DELETE FROM jobs ...` → *permission denied* |
+| 10a | **Role-Based Access Control in DB** | Three roles (`user_role` ENUM: candidate, recruiter, admin) mirrored by PostgreSQL roles `candidate_role`, `recruiter_role` and `admin_role` with table- and column-level `GRANT`s (`db/06_roles.sql`); e.g. `SET ROLE candidate_role; DELETE FROM jobs ...` → *permission denied* |
+| 10b | **Admin Role (full CRUD)** | `/admin` Admin Console: create / read / update / delete candidates, recruiters, jobs, applications (via `apply_to_job`), candidate & job skills, companies, skills, users; read-only status-history audit; platform stats; "act as" any candidate or recruiter to use their pages (`app/admin`, `app/api/admin/*`, `lib/adminTables.ts`) |
 | 10 | **Security & Credentials** | All credentials loaded from `.env` (no hard-coded secrets), parameterized SQL queries (no SQL injection), bcrypt password hashing, httpOnly JWT cookies |
 | 11 | **Automated Tests** | 16 test cases (T1 - T16) verifying integrity, constraints, triggers, queries, and permissions with 100% pass rate |
 | 12 | **Git Commits & Documentation** | Individual commit log per member on GitHub with full documentation in `docs/` |

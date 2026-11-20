@@ -12,12 +12,14 @@ INSERT INTO companies (name, industry, location, website) VALUES
 ON CONFLICT (name) DO NOTHING;
 
 -- 2. Insert Recruiter Users
--- Note: users table uses user_role ENUM ('candidate', 'recruiter')
+-- Note: users table uses user_role ENUM ('candidate', 'recruiter', 'admin')
 INSERT INTO users (email, password_hash, role) VALUES
 ('recruiter1@nexusai.com', '$2b$10$Pld/1iCGiQECDlaEDYoEhOOPYgmuXY5VXgkpXXl0TTLn.RFsJDOZ6', 'recruiter'),
 ('recruiter2@cloudscale.io', '$2b$10$Pld/1iCGiQECDlaEDYoEhOOPYgmuXY5VXgkpXXl0TTLn.RFsJDOZ6', 'recruiter'),
 ('recruiter3@fintechmatrix.com', '$2b$10$Pld/1iCGiQECDlaEDYoEhOOPYgmuXY5VXgkpXXl0TTLn.RFsJDOZ6', 'recruiter'),
-('recruiter4@pixelcraft.dev', '$2b$10$Pld/1iCGiQECDlaEDYoEhOOPYgmuXY5VXgkpXXl0TTLn.RFsJDOZ6', 'recruiter')
+('recruiter4@pixelcraft.dev', '$2b$10$Pld/1iCGiQECDlaEDYoEhOOPYgmuXY5VXgkpXXl0TTLn.RFsJDOZ6', 'recruiter'),
+-- Platform administrator (password123)
+('admin@careerlens.com', '$2b$10$Pld/1iCGiQECDlaEDYoEhOOPYgmuXY5VXgkpXXl0TTLn.RFsJDOZ6', 'admin')
 ON CONFLICT (email) DO NOTHING;
 
 -- 3. Link Recruiters to Companies

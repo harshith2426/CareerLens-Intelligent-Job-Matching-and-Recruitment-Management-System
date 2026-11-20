@@ -40,7 +40,9 @@ function LoginFormContent() {
         return;
       }
 
-      if (data.user.role === 'recruiter') {
+      if (data.user.role === 'admin') {
+        router.push('/admin');
+      } else if (data.user.role === 'recruiter') {
         router.push('/recruiter/dashboard');
       } else {
         router.push('/matches');
@@ -148,6 +150,18 @@ function LoginFormContent() {
               <div className="truncate">
                 <p className="font-semibold text-slate-900 truncate">Recruiter</p>
                 <p className="text-[10px] text-slate-500 truncate">Sarah (Nexus AI)</p>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleDemoLogin('admin@careerlens.com')}
+              className="col-span-2 p-2.5 text-left rounded-xl border border-slate-200 hover:border-amber-400 hover:bg-amber-50/50 transition flex items-center space-x-2"
+            >
+              <Shield className="w-4 h-4 text-amber-600 shrink-0" />
+              <div className="truncate">
+                <p className="font-semibold text-slate-900 truncate">Admin</p>
+                <p className="text-[10px] text-slate-500 truncate">Full CRUD + act as any user</p>
               </div>
             </button>
           </div>

@@ -3,13 +3,14 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Briefcase, Sparkles, User, FileText, LayoutDashboard, PlusCircle, LogOut, LogIn, ChevronRight, CheckCircle2 } from 'lucide-react';
+import { Briefcase, Sparkles, User, FileText, LayoutDashboard, PlusCircle, LogOut, LogIn, ChevronRight, CheckCircle2, ShieldCheck, Undo2 } from 'lucide-react';
 
 interface UserSession {
   userId: number;
   email: string;
-  role: 'candidate' | 'recruiter';
+  role: 'candidate' | 'recruiter' | 'admin';
   fullName: string;
+  adminUserId?: number;
 }
 
 export default function Navbar() {
@@ -35,9 +36,35 @@ export default function Navbar() {
 
   const isCandidate = user?.role === 'candidate';
   const isRecruiter = user?.role === 'recruiter';
+  const isAdmin = user?.role === 'admin';
+  const isActingAs = !!user?.adminUserId;
+
+  const handleBackToAdmin = async () => {
+    const res = await fetch('/api/admin/act-as', { method: 'DELETE' });
+    if (res.ok) {
+      router.push('/admin');
+      router.refresh();
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-slate-200">
+      {isActingAs && (
+        <div className="bg-amber-100 border-b border-amber-300 text-amber-900 text-xs">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-1.5 flex items-center justify-between gap-3">
+            <span>
+              <strong>Admin mode:</strong> you are acting as <strong>{user?.fullName}</strong> ({user?.role}). Everything you do is done as this user.
+            </span>
+            <button
+              onClick={handleBackToAdmin}
+              className="flex items-center space-x-1 font-bold bg-amber-600 hover:bg-amber-700 text-white px-2.5 py-1 rounded-md"
+            >
+              <Undo2 className="w-3.5 h-3.5" />
+              <span>Back to Admin</span>
+            </button>
+          </div>
+        </div>
+      )}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo & Platform Tag */}
@@ -96,6 +123,18 @@ export default function Navbar() {
                   <span>Profile & Skills</span>
                 </Link>
               </>
+            )}
+
+            {isAdmin && (
+              <Link
+                href="/admin"
+                className={`flex items-center space-x-1.5 px-3 py-2 rounded-lg text-sm font-medium transition ${
+                  pathname === '/admin' ? 'bg-amber-50 text-amber-800 font-semibold' : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50'
+                }`}
+              >
+                <ShieldCheck className="w-4 h-4 text-amber-600" />
+                <span>Admin Console</span>
+              </Link>
             )}
 
             {isRecruiter && (
